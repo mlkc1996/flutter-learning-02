@@ -1,6 +1,7 @@
 import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/widgets/expenses_list/expense_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/expense.dart';
 import 'new_expense.dart';
 
@@ -42,12 +43,17 @@ class _ExpensesState extends State<Expenses> {
   ];
 
   void _openAddExpenseOverlay() {
+    var orientation = MediaQuery.of(context).orientation;
+
+    bool isLandscapeMode = orientation == Orientation.landscape;
+
     showModalBottomSheet(
       isScrollControlled: true,
       context: context,
       builder: (ctx) {
         return NewExpense(addExpense: addExpense);
       },
+      useSafeArea: !isLandscapeMode,
     );
   }
 
@@ -82,6 +88,18 @@ class _ExpensesState extends State<Expenses> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+
+    var children = [
+      Expanded(child: Chart(expenses: expenses)),
+      Expanded(
+        child: expenses.isNotEmpty
+            ? ExpenseList(expenses: expenses, onRemoveExpense: removeExpense)
+            : Center(child: Text("No expense found. Try adding one!")),
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: Text("Flutter Expense Tracker"),
@@ -92,19 +110,7 @@ class _ExpensesState extends State<Expenses> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Chart(expenses: expenses),
-          Expanded(
-            child: expenses.isNotEmpty
-                ? ExpenseList(
-                    expenses: expenses,
-                    onRemoveExpense: removeExpense,
-                  )
-                : Center(child: Text("No expense found. Try adding one!")),
-          ),
-        ],
-      ),
+      body: width < 600 ? Column(children: children) : Row(children: children),
     );
   }
 }
